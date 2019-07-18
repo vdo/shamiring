@@ -31,34 +31,25 @@ func generate_rands(k int) RandParams {
 	return RandParams{*p, r}
 }
 
-// Python code to evaluate a poly at point x, then modulo 'prime'
-// def _eval_at(poly, x, prime):
-//     '''evaluates polynomial (coefficient tuple) at x, used to generate a
-//     shamir pool in make_random_shares below.
-//     '''
-//     accum = 0
-//     for coeff in reversed(poly):
-//         accum *= x
-//         accum += coeff
-//         accum %= prime
-//     return accum
-
-func eval(poly []big.Int, x int, p big.Int) big.Int {
+func eval(poly []big.Int, x int64, p big.Int) *big.Int {
 
 	acc := big.NewInt(0)
-	for _, x := range poly {
-		acc = acc * x
-
+	// Poly in reverse, see: https://rosettacode.org/wiki/Horner%27s_rule_for_polynomial_evaluation
+	for i := len(poly) - 1; i >= 0; i-- {
+		acc.Mul(acc, big.NewInt(x))
+		acc.Add(acc, &poly[i])
+		acc.Mod(acc, &p)
 	}
-
+	return acc
 }
 
-func get_points(n int, r []big.Int, s big.Int, k int) []big.Int {
-	points := make([]big.Int, n)
-	for i := 0; i < n; i++ {
-		// evaluate poly
-
+func get_points(n int, params RandParams) []big.Int {
+	ps := make([]big.Int, n)
+	for i := 1; i <= n; i++ {
+		// evaluate poly for each
+		ps[i-1] = *eval(params.Rands, int64(i), params.P)
 	}
+	return ps
 }
 
 func main() {
@@ -70,5 +61,6 @@ func main() {
 	rands := generate_rands(5)
 	fmt.Println(rands)
 
-	points
+	points := get_points(3, rands)
+	fmt.Println(points)
 }
