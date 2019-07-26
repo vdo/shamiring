@@ -54,40 +54,42 @@ func get_points(n int, params RandParams) []big.Int {
 	return ps
 }
 
-// Lagrange Interpolation, kudos to arnaucube
-func lagrange(xs, ys []*big.Int, p *big.Int) *big.Int {
-	resultN := big.NewInt(int64(0))
-	resultD := big.NewInt(int64(0))
-	for i := 0; i < len(xs); i++ {
-		lagNum := big.NewInt(int64(1))
-		lagDen := big.NewInt(int64(1))
+func modInverse(number *big.Int, p *big.Int) *big.Int {
+	copy := big.NewInt(0).Set(number)
+	copy = copy.Mod(copy, p)
+	pcopy := big.NewInt(0).Set(p)
+	x := big.NewInt(0)
+	y := big.NewInt(0)
+	copy.GCD(x, y, pcopy, copy)
+	result := big.NewInt(0).Set(p)
+	result = result.Add(result, y)
+	result = result.Mod(result, p)
+	return result
+}
+
+func interpolate(xs []*big.Int, ys []*big.Int, p *big.Int) (value *big.Int) {
+	value = big.NewInt(int64(0))
+	for i := 0; i < len(ys); i++ {
+		num := big.NewInt(int64(1))
+		den := big.NewInt(int64(1))
 		for j := 0; j < len(xs); j++ {
-			if xs[i] != xs[j] {
-				currLagNum := xs[j]
-				currLagDen := new(big.Int).Sub(xs[j], xs[i])
-				lagNum = new(big.Int).Mul(lagNum, currLagNum)
-				lagDen = new(big.Int).Mul(lagDen, currLagDen)
+			if i != j {
+				top := big.NewInt(0)
+				top = top.Mul(xs[j], big.NewInt(-1))
+				bottom := new(big.Int).Sub(xs[j], xs[i])
+				num = num.Mul(num, top)
+				num = num.Mod(num, p)
+				den = den.Mul(den, bottom)
+				den = den.Mod(den, p)
 			}
 		}
-		numerator := new(big.Int).Mul(xs[i], lagNum)
-		quo := new(big.Int).Quo(numerator, lagDen)
-		if quo.Int64() != 0 {
-			resultN = resultN.Add(resultN, quo)
-		} else {
-			resultNMULlagDen := new(big.Int).Mul(resultN, lagDen)
-			resultN = new(big.Int).Add(resultNMULlagDen, numerator)
-			resultD = resultD.Add(resultD, lagDen)
-		}
+		acc := big.NewInt(0).Set(ys[i])
+		acc = acc.Mul(acc, num)
+		acc = acc.Mul(acc, modInverse(den, p))
+		value = value.Add(value, acc)
+		value = value.Mod(value, p)
 	}
-	var modinvMul *big.Int
-	if resultD.Int64() != 0 {
-		modinv := new(big.Int).ModInverse(resultD, p)
-		modinvMul = new(big.Int).Mul(resultN, modinv)
-	} else {
-		modinvMul = resultN
-	}
-	r := new(big.Int).Mod(modinvMul, p)
-	return r
+	return
 }
 
 func check(e error) {
@@ -131,9 +133,25 @@ func main() {
 		fmt.Println("Please enter a number!")
 		return
 	}
-	rands := generate_rands(5)
-	fmt.Println(rands)
+	ptest := big.NewInt(int64(1613))
+	//ptest, _ := rand.Prime(rand.Reader, 1024)
+	var ytest []*big.Int
+	var xtest []*big.Int
+	xtest = append(xtest, big.NewInt(int64(1)))
+	xtest = append(xtest, big.NewInt(int64(2)))
+	xtest = append(xtest, big.NewInt(int64(6)))
+	ytest = append(ytest, big.NewInt(int64(1494)))
+	ytest = append(ytest, big.NewInt(int64(329)))
+	ytest = append(ytest, big.NewInt(int64(775)))
 
-	points := get_points(3, rands)
-	fmt.Println(points)
+	//res := lagrange(xtest, ytest, ptest)
+	res := interpolate(xtest, ytest, ptest)
+	fmt.Println(res)
+
+	// rands := generate_rands(5)
+	// fmt.Println(rands)
+
+	// points := get_points(3, rands)
+	// fmt.Println(points)
+
 }
