@@ -9,38 +9,33 @@ import (
 	"strings"
 )
 
-// s = secret ==== a0
-// n = parts ===>  we need to obtain n points in the poly
-// k = threshold ===> we need to obtain (k-1) random numbers
-
 type RandParams struct {
-	P     big.Int   //finite field prime
-	Rands []big.Int // random coeficients
+	P     *big.Int   //finite field prime
+	Rands []*big.Int // random coeficients
 }
 
-// f(x) = s + n1*x + n2*x^2 + n3*x^3 ...
 func generate_rands(k int) RandParams {
 	// Generate prime number for finite field
 	p, _ := rand.Prime(rand.Reader, 256)
 
-	r := make([]big.Int, k)
+	r := make([]*big.Int, k)
 	max := new(big.Int)
 	max.Exp(big.NewInt(2), big.NewInt(130), nil).Sub(max, big.NewInt(1))
 	for i := 1; i < k; i++ {
 		n, _ := rand.Int(rand.Reader, max)
-		r[i] = *n
+		r[i] = n
 	}
 	// r[0] is the secret!
-	return RandParams{*p, r}
+	return RandParams{p, r}
 }
 
-func eval(poly []big.Int, x int, p big.Int) *big.Int {
+func eval(poly []*big.Int, x int, p *big.Int) *big.Int {
 	// Poly in reverse, see: https://rosettacode.org/wiki/Horner%27s_rule_for_polynomial_evaluation
-	acc := big.NewInt(int64(0))
+	acc := big.NewInt(0)
 	for i := len(poly) - 1; i >= 0; i-- {
 		acc.Mul(acc, big.NewInt(int64(x)))
-		acc.Add(acc, &poly[i])
-		acc.Mod(acc, &p)
+		acc.Add(acc, poly[i])
+		acc.Mod(acc, p)
 	}
 	return acc
 }
@@ -55,13 +50,13 @@ func get_points(n int, params RandParams) []big.Int {
 }
 
 func modInverse(number *big.Int, p *big.Int) *big.Int {
-	copy := big.NewInt(0).Set(number)
+	copy := big.NewInt(int64(0)).Set(number)
 	copy = copy.Mod(copy, p)
-	pcopy := big.NewInt(0).Set(p)
-	x := big.NewInt(0)
-	y := big.NewInt(0)
+	pcopy := big.NewInt(int64(0)).Set(p)
+	x := big.NewInt(int64(0))
+	y := big.NewInt(int64(0))
 	copy.GCD(x, y, pcopy, copy)
-	result := big.NewInt(0).Set(p)
+	result := big.NewInt(int64(0)).Set(p)
 	result = result.Add(result, y)
 	result = result.Mod(result, p)
 	return result
@@ -74,8 +69,8 @@ func interpolate(xs []*big.Int, ys []*big.Int, p *big.Int) (value *big.Int) {
 		den := big.NewInt(int64(1))
 		for j := 0; j < len(xs); j++ {
 			if i != j {
-				top := big.NewInt(0)
-				top = top.Mul(xs[j], big.NewInt(-1))
+				top := big.NewInt(int64(0))
+				top = top.Mul(xs[j], big.NewInt(int64(-1)))
 				bottom := new(big.Int).Sub(xs[j], xs[i])
 				num = num.Mul(num, top)
 				num = num.Mod(num, p)
@@ -83,7 +78,7 @@ func interpolate(xs []*big.Int, ys []*big.Int, p *big.Int) (value *big.Int) {
 				den = den.Mod(den, p)
 			}
 		}
-		acc := big.NewInt(0).Set(ys[i])
+		acc := big.NewInt(int64(0)).Set(ys[i])
 		acc = acc.Mul(acc, num)
 		acc = acc.Mul(acc, modInverse(den, p))
 		value = value.Add(value, acc)
@@ -94,7 +89,7 @@ func interpolate(xs []*big.Int, ys []*big.Int, p *big.Int) (value *big.Int) {
 
 func check(e error) {
 	if e != nil {
-		panic(e)
+		fmt.Println("ERROR: ", e)
 	}
 }
 
@@ -133,20 +128,19 @@ func main() {
 		fmt.Println("Please enter a number!")
 		return
 	}
-	ptest := big.NewInt(int64(1613))
+	ptest := big.NewInt(int64(91994388364979))
 	//ptest, _ := rand.Prime(rand.Reader, 1024)
 	var ytest []*big.Int
 	var xtest []*big.Int
-	xtest = append(xtest, big.NewInt(int64(1)))
-	xtest = append(xtest, big.NewInt(int64(2)))
-	xtest = append(xtest, big.NewInt(int64(6)))
-	ytest = append(ytest, big.NewInt(int64(1494)))
-	ytest = append(ytest, big.NewInt(int64(329)))
-	ytest = append(ytest, big.NewInt(int64(775)))
 
-	//res := lagrange(xtest, ytest, ptest)
+	xtest = append(xtest, big.NewInt(int64(1)))
+	xtest = append(xtest, big.NewInt(int64(3)))
+	xtest = append(xtest, big.NewInt(int64(5)))
+	ytest = append(ytest, big.NewInt(int64(9285275391624)))
+	ytest = append(ytest, big.NewInt(int64(53079135586964)))
+	ytest = append(ytest, big.NewInt(int64(37709686632597)))
 	res := interpolate(xtest, ytest, ptest)
-	fmt.Println(res)
+	fmt.Println("First example:", res)
 
 	// rands := generate_rands(5)
 	// fmt.Println(rands)
