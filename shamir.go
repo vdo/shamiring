@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"math/big"
 	"os"
@@ -15,7 +16,7 @@ type RandParams struct {
 }
 
 func generate_rands(k int) RandParams {
-	// Generate prime number for finite field
+	// Generate prime number for finite field, everytime different??
 	p, _ := rand.Prime(rand.Reader, 256)
 
 	r := make([]*big.Int, k)
@@ -141,6 +142,10 @@ func main() {
 	ytest = append(ytest, big.NewInt(int64(37709686632597)))
 	res := interpolate(xtest, ytest, ptest)
 	fmt.Println("First example:", res)
+
+	randnum, _ := rand.Prime(rand.Reader, 256)
+	fmt.Println("base64 (1):", base64.StdEncoding.EncodeToString(randnum.Bytes()))
+	fmt.Println("base64 (2):", base64.StdEncoding.EncodeToString(res.Bytes()))
 
 	// rands := generate_rands(5)
 	// fmt.Println(rands)

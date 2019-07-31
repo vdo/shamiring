@@ -25,7 +25,7 @@ func (ui *UI) getShares(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}
 	ui.currentSecret = ui.Secretform.GetFieldText("Secret:")
-
+	ui.listActive = true
 	ui.Sharelist.Draw()
 	// run sharelist !
 	// The share list can be created with inputField, no editable, set text
@@ -56,13 +56,13 @@ func main() {
 	g.SelFgColor = gocui.ColorGreen
 	g.Mouse = true
 
-	terminalWidth, terminalHeight := g.Size()
+	// terminalWidth, terminalHeight := g.Size()
 
 	ui := &UI{
 		g,
 		component.NewForm(g, "menu", 2, 2, 0, 0),
 		component.NewForm(g, "secret", 25, 2, 0, 0),
-		component.NewForm(g, "shares", 2, 40, 0, 40),
+		component.NewForm(g, "shares", 2, 10, 0, 0),
 		"",
 		make([]string, 0, 24),
 		false,
@@ -73,13 +73,20 @@ func main() {
 	ui.Menu.AddButton("RECOVER", ui.shareInput)
 
 	// Secret Input
-	ui.Secretform.AddInputField("Secret:", 7, 40).SetMaskKeybinding(gocui.KeyCtrlA)
+	ui.Secretform.AddInputField("Secret:", 7, 52).SetMaskKeybinding(gocui.KeyCtrlA)
 	ui.Secretform.Cursor = true
 	ui.Secretform.AddButton("OK", ui.getShares)
 	ui.Secretform.AddButton("Cancel", nil)
 
-	// Share Input
-	ui.Sharelist.SetEditable(false)
+	ui.Sharelist.AddInputField("1:", 2, 80).SetText("0bQCkagO6d/Tt2Ays8H9qfj4KucUqpOG0CG+o7mJgTQ=").SetEditable(false)
+	ui.Sharelist.AddInputField("2:", 2, 80).SetText("EVrWx0yY809A4zEfkxstogAO9fawh/OB8n4ZxEymQH0=").SetEditable(false)
+	ui.Sharelist.AddInputField("3:", 2, 80).SetText("o9arB2ALaQ8Jtkj+E4Rff18RxdiIA8zQQSE9GnTCFvg=").SetEditable(false)
+	ui.Sharelist.AddInputField("4:", 2, 80).SetText("vOtQ6AhdEnsZXJwYZz5VYJhDpL8beMWzj2G3JOOQFbY=").SetEditable(false)
+	ui.Sharelist.AddInputField("5:", 2, 80).SetText("s9Ef/+FTg7KPlYDXBGTKwM3lBUydXJC9LvhTBIwtfSE=").SetEditable(false)
+	ui.Sharelist.AddInputField("6:", 2, 80).SetText("2EzixBssq4l66uoPQzfB0mme9tVl9LTJ76bi9+vMvzk=").SetEditable(false)
+	ui.Sharelist.AddInputField("7:", 2, 80).SetText("8YItD4P7+dX9T0ye587AmZpQXCOTjcDQKm3pWQOHWFc=").SetEditable(false)
+	ui.Secretform.Cursor = true
+	ui.Sharelist.SelBgColor = gocui.ColorWhite
 
 	g.SetManagerFunc(ui.layout)
 
